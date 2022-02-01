@@ -12,16 +12,6 @@ from torch.utils import data
 import transform
 
 
-# def label2image(lbl):
-#     i = lbl.shape[0]
-#     j = lbl.shape[1]
-#     rgblbl = np.zeros((i,j,3))
-#     for index_i in range(i):
-#         for index_j in range(j):
-#             rgblbl[index_i, index_j, :] = colormap[lbl[index_i, index_j]]
-#     return rgblbl
-
-
 class DatasetBase(data.Dataset):
     def __init__(self, root, split='train'):
         self.root = root
@@ -33,23 +23,13 @@ class DatasetBase(data.Dataset):
         self.std_bgr = np.array([67.907031, 66.337443, 66.169096])
 
         self.files = collections.defaultdict(list)
-        imgsets_file = os.path.join(root, f"{self.split}.txt")
-        with open(imgsets_file) as f:
-            ids = sorted(f.readlines())
-        for did in ids:
-            did = did.strip()
-            img_file = os.path.join(root, 'images', f'{did}.jpg')
-            lbl_file = os.path.join(root, 'ECP_newAnnotations', f'{did}_mask.png')
-            self.files[self.split].append({
-                'img': img_file,
-                'lbl': lbl_file,
-            })
-            # RGB color for each class
-            self.colormap = [[0, 0, 0], [255, 0, 0], [255, 255, 0], [128, 0, 255],
-                        [255, 128, 0], [0, 0, 255], [128, 255, 255], [0, 255, 0], [128, 128, 128]]
-            self.colormap2label = np.zeros(256 ** 3)  # 每个像素点有 0 ~ 255 的选择，RGB 三个通道
-            for i, cm in enumerate(self.colormap):
-                self.colormap2label[(cm[0] * 256 + cm[1]) * 256 + cm[2]] = i  # 建立索引
+
+        # RGB color for each class
+        self.colormap = [[0, 0, 0], [255, 0, 0], [255, 255, 0], [128, 0, 255],
+                    [255, 128, 0], [0, 0, 255], [128, 255, 255], [0, 255, 0], [128, 128, 128]]
+        self.colormap2label = np.zeros(256 ** 3)  # 每个像素点有 0 ~ 255 的选择，RGB 三个通道
+        for i, cm in enumerate(self.colormap):
+            self.colormap2label[(cm[0] * 256 + cm[1]) * 256 + cm[2]] = i  # 建立索引
 
     def __len__(self):
         return len(self.files[self.split])
@@ -120,6 +100,7 @@ class DatasetBase(data.Dataset):
                 rgblbl[index_i, index_j, :] = self.colormap[lbl[index_i, index_j]]
         return rgblbl
 
+
 class CMPDataset(DatasetBase):
     def __init__(self, root, split='train'):
         super(CMPDataset, self).__init__(root, split)
@@ -156,8 +137,21 @@ class CMPDataset(DatasetBase):
             return self.transform_test(img, lbl)
 
 
-# class graz50_Dataset(DatasetBase):
+class Graz50Dataset(DatasetBase):
+    def __init__(self, root, split='train'):
+        super(Graz50Dataset, self).__init__(root, split=split)
 
+        imgsets_file = os.path.join(root, f"{self.split}.txt")
+        with open(imgsets_file) as f:
+            ids = sorted(f.readlines())
+        for did in ids:
+            did = did.strip()
+            img_file = os.path.join(root, 'images', f'{did}.png')
+            lbl_file = os.path.join(root, 'labels_full', f'{did}.png')
+            self.files[self.split].append({
+                'img': img_file,
+                'lbl': lbl_file,
+            })
 
 # class etrims_Dataset(DatasetBase):
 
@@ -168,6 +162,18 @@ class CMPDataset(DatasetBase):
 class ECPDataset(DatasetBase):
     def __init__(self, root, split='train'):
         super(ECPDataset, self).__init__(root, split=split)
+
+        imgsets_file = os.path.join(root, f"{self.split}.txt")
+        with open(imgsets_file) as f:
+            ids = sorted(f.readlines())
+        for did in ids:
+            did = did.strip()
+            img_file = os.path.join(root, 'images', f'{did}.jpg')
+            lbl_file = os.path.join(root, 'ECP_newAnnotations', f'{did}_mask.png')
+            self.files[self.split].append({
+                'img': img_file,
+                'lbl': lbl_file,
+            })
 
 
 # class ParisArtDeco_Dataset(DatasetBase):
